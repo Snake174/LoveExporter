@@ -1,0 +1,23 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/android.png</file>
+        <file>icons/linux.png</file>
+        <file>icons/mac.png</file>
+        <file>icons/windows.png</file>
+        <file>icons/game.png</file>
+        <file>icons/info.png</file>
+        <file>icons/key.png</file>
+        <file>icons/settings.png</file>
+        <file>icons/log.png</file>
+        <file>icons/ic_launcher.png</file>
+        <file>icons/update.png</file>
+        <file>icons/info.txt</file>
+        <file>icons/AndroidManifestNew.xml</file>
+        <file>icons/AndroidManifestOld.xml</file>
+        <file>icons/download.png</file>
+        <file>icons/max.png</file>
+        <file>icons/snake.png</file>
+        <file>icons/val.png</file>
+        <file>icons/icon.ico</file>
+    </qresource>
+</RCC>

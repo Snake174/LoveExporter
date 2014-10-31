@@ -1,0 +1,35 @@
+<html>
+  <body>
+    <table border="0" width="100%">
+      <tr><td align="center" colspan="2"><h3><font color=#990000>Authors</font></h3></td></tr>
+      <tr>
+        <td width="110">
+          <img src=":icons/snake.png">
+        </td>
+        <td valign="middle">
+          <font color=#007700><b>Snake174</b></font> [ <a href="#">http://gcup.ru/index/8-24796</a> ]<br><br>
+          <b>Post:</b> programmer
+        </td>
+      </tr>
+      <tr>
+        <td width="110">
+          <img src=":icons/max.png">
+        </td>
+        <td valign="middle">
+          <font color=#007700><b>burlachenko</b></font> [ <a href="#">http://gcup.ru/index/8-9529</a> ]<br><br>
+          <b>Post:</b> tester
+        </td>
+      </tr>
+      <tr>
+        <td width="110">
+          <img src=":icons/val.png">
+        </td>
+        <td valign="middle">
+          <font color=#007700><b>silver52rus</b></font> [ <a href="#">http://gcup.ru/index/8-47390</a> ]<br><br>
+          <b>Post:</b> tester
+        </td>
+      </tr>
+      <tr><td align="center" colspan="2"><b>Site:</b> <a href="#">http://goo.gl/hC6ph3</a></td></tr>
+    </table>
+  </body>
+</html>
