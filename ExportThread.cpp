@@ -351,7 +351,7 @@ void ExportThread::recurseAddDir( const QDir &d, QStringList &list )
     if (finfo.isSymLink())
       return;
 
-    if (finfo.isDir())
+    if (finfo.isDir() && !exportInfo.excludes.contains( finfo.baseName() ))
     {
       QString dirname = finfo.fileName();
       QDir sd( finfo.filePath() );

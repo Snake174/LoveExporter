@@ -11,7 +11,7 @@ MOC_DIR = obj
 RCC_DIR = obj
 
 DEFINES += MAJOR_VERSION=\\\"0\\\"
-DEFINES += MINOR_VERSION=\\\"1\\\"
+DEFINES += MINOR_VERSION=\\\"3\\\"
 
 win32 {
   DEFINES += WIN32

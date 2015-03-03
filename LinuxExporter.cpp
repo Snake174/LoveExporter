@@ -19,6 +19,9 @@ void LinuxExporter::run()
   // Каталог с исходниками игры
   QString gameSourceDir = exportInfo.gameSourceDir;
 
+  if (!gameSourceDir.endsWith( PathUtils::nativePath("/") ))
+    gameSourceDir.append( PathUtils::nativePath("/") );
+
   // Каталог, куда помещается готовая игра
   QString gameTargetDir = "";
 
@@ -48,6 +51,21 @@ void LinuxExporter::run()
     sendLog("<b>Copy libraries</b> - <font color=#CC0000>FAIL</font>");
     clearAll();
     return;
+  }
+
+  for (int i = 0; i < exportInfo.excludes.count(); ++i)
+  {
+    if (!QDir( gameTargetDir + exportInfo.excludes.at(i) ).exists())
+      QDir().mkpath( gameTargetDir + exportInfo.excludes.at(i) );
+
+    copyStatus = copyDir( gameSourceDir + exportInfo.excludes.at(i), gameTargetDir + exportInfo.excludes.at(i) );
+
+    if (!copyStatus)
+    {
+      sendLog("<b>Copy libraries</b> - <font color=#CC0000>FAIL</font>");
+      clearAll();
+      return;
+    }
   }
 
   sendLog("<b>Copy libraries</b> - <font color=#00CC00>OK</font>");

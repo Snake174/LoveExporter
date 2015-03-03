@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QAction>
 #include <QComboBox>
+#include <QCheckBox>
 #include <QDir>
 #include <QFrame>
 #include <QFile>
@@ -15,6 +16,7 @@
 #include <QPlainTextEdit>
 #include <QTextEdit>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QTabWidget>
 #include <QTextStream>
 #include <QToolBar>
@@ -55,6 +57,7 @@ MainWindow::MainWindow( QWidget *parent ):
   tabs->addTab( info( tabs ), QIcon(":icons/info.png"), tr("Info") );
 
   setCentralWidget( tabs );
+  setMinimumSize( 640, 480 );
   setWindowTitle( QString("LOVE Exporter [v%1.%2]").arg( MAJOR_VERSION ).arg( MINOR_VERSION ) );
 }
 //=================================================================================================
@@ -188,6 +191,74 @@ bool MainWindow::checkData()
   return true;
 }
 //=================================================================================================
+void MainWindow::checkConf( int t )
+{
+  QString srcDir = gameSourceDir->text().trimmed();
+
+  if (!srcDir.endsWith( PathUtils::nativePath("/") ))
+    srcDir.append( PathUtils::nativePath("/") );
+
+  QString str;
+
+  if (t == Export::Windows)
+    str = "  %1 = %2\r\n";
+  else
+    str = "  %1 = %2\n";
+
+  QFile conf( PathUtils::nativePath( srcDir + "conf.lua" ) );
+
+  if (!conf.exists())
+  {
+    if (!conf.open( QIODevice::WriteOnly ))
+      return;
+
+    QTextStream ts( &conf );
+    ts.setAutoDetectUnicode( true );
+    ts.setGenerateByteOrderMark( false );
+
+    if (t == Export::Windows)
+      ts << "function love.conf(t)\r\n";
+    else
+      ts << "function love.conf(t)\n";
+
+    ts << str.arg( sgIdentity->objectName() ).arg( !sgIdentity->text().trimmed().isEmpty() ? "\"" + sgIdentity->text().trimmed() + "\"" : "nil" );
+    ts << str.arg( sgVersion->objectName() ).arg( "\"" + sgVersion->text().trimmed() + "\"" );
+    ts << str.arg( sgConsole->objectName() ).arg( sgConsole->isChecked() ? "true" : "false" );
+    ts << str.arg( swTitle->objectName() ).arg( "\"" + swTitle->text().trimmed() + "\"" );
+    //ts << str.arg("t.window.icon").arg("\"LoveWindowIcon.png\"");
+    ts << str.arg( swWidth->objectName() ).arg( swWidth->value() );
+    ts << str.arg( swHeight->objectName() ).arg( swHeight->value() );
+    ts << str.arg( swBorderless->objectName() ).arg( swBorderless->isChecked() ? "true" : "false" );
+    ts << str.arg( swResizable->objectName() ).arg( swResizable->isChecked() ? "true" : "false" );
+    ts << str.arg( swMinWidth->objectName() ).arg( swMinWidth->value() );
+    ts << str.arg( swMinHeight->objectName() ).arg( swMinHeight->value() );
+    ts << str.arg( swFullscreen->objectName() ).arg( swFullscreen->isChecked() ? "true" : "false" );
+    ts << str.arg( swFullscreenType->objectName() ).arg( "\"" + swFullscreenType->currentText() + "\"" );
+    ts << str.arg( swVSync->objectName() ).arg( swVSync->isChecked() ? "true" : "false" );
+    ts << str.arg( swFSSA->objectName() ).arg( swFSSA->value() );
+    ts << str.arg( swDisplay->objectName() ).arg( swDisplay->currentText() );
+    ts << str.arg( swHDPI->objectName() ).arg( swHDPI->isChecked() ? "true" : "false" );
+    ts << str.arg( swSRGB->objectName() ).arg( swSRGB->isChecked() ? "true" : "false" );
+    ts << str.arg( smAudio->objectName() ).arg( smAudio->isChecked() ? "true" : "false" );
+    ts << str.arg( smEvent->objectName() ).arg( smEvent->isChecked() ? "true" : "false" );
+    ts << str.arg( smGraphics->objectName() ).arg( smGraphics->isChecked() ? "true" : "false" );
+    ts << str.arg( smImage->objectName() ).arg( smImage->isChecked() ? "true" : "false" );
+    ts << str.arg( smJoystick->objectName() ).arg( smJoystick->isChecked() ? "true" : "false" );
+    ts << str.arg( smKeyboard->objectName() ).arg( smKeyboard->isChecked() ? "true" : "false" );
+    ts << str.arg( smMath->objectName() ).arg( smMath->isChecked() ? "true" : "false" );
+    ts << str.arg( smMouse->objectName() ).arg( smMouse->isChecked() ? "true" : "false" );
+    ts << str.arg( smPhysics->objectName() ).arg( smPhysics->isChecked() ? "true" : "false" );
+    ts << str.arg( smSound->objectName() ).arg( smSound->isChecked() ? "true" : "false" );
+    ts << str.arg( smSystem->objectName() ).arg( smSystem->isChecked() ? "true" : "false" );
+    ts << str.arg( smTimer->objectName() ).arg( smTimer->isChecked() ? "true" : "false" );
+    ts << str.arg( smWindow->objectName() ).arg( smWindow->isChecked() ? "true" : "false" );
+    ts << str.arg( smThread->objectName() ).arg( smThread->isChecked() ? "true" : "false" );
+    ts << "end";
+
+    conf.close();
+  }
+}
+//=================================================================================================
 QWidget *MainWindow::gameSettings( QWidget *parent )
 {
   QWidget *wgt = new QWidget( parent );
@@ -197,6 +268,7 @@ QWidget *MainWindow::gameSettings( QWidget *parent )
   gameName->setText("LoveGame");
 
   gameSourceDir = new QLineEdit( wgt );
+  gameSourceDir->setReadOnly( true );
 
   QToolButton *tbSelectGameSourceDir = new QToolButton( wgt );
   tbSelectGameSourceDir->setText("...");
@@ -313,14 +385,18 @@ QWidget *MainWindow::settings( QWidget *parent )
   QWidget *wgt = new QWidget( parent );
   QVBoxLayout *vl = new QVBoxLayout( wgt );
 
-  QGroupBox *gbSDK = new QGroupBox( tr("SDK"), wgt );
+  QTabWidget *tabs = new QTabWidget( wgt );
+
+
+  // SDK
+  QFrame *gbSDK = new QFrame( tabs );
   QGridLayout *gl = new QGridLayout( gbSDK );
 
   #ifdef WIN32
     QString urlSDK = "http://dl.google.com/android/installer_r23.0.2-windows.exe";
     QString urlNDK = "http://dl.google.com/android/ndk/android-ndk-r9d-windows-x86.zip";
     QString urlJDK = "http://download.oracle.com/otn/java/jdk/6u45-b06/jdk-6u45-windows-i586.exe";
-    QString urlANT = "http://apache-mirror.rbc.ru/pub/apache//ant/binaries/apache-ant-1.9.4-bin.zip";
+    QString urlANT = "https://drive.google.com/file/d/0B2Rm8VGinE84c0pheVdjS3JmWlU"; //"http://apache-mirror.rbc.ru/pub/apache//ant/binaries/apache-ant-1.9.4-bin.zip";
   #else
     QString urlSDK = "http://dl.google.com/android/android-sdk_r23.0.2-linux.tgz";
     QString urlNDK = "http://dl.google.com/android/ndk/android-ndk32-r10b-linux-x86.tar.bz2";
@@ -340,17 +416,19 @@ QWidget *MainWindow::settings( QWidget *parent )
   ANT = new SDKWidget( "ANT", urlANT, gbSDK );
   ANT->path->setText( qgetenv("ANT_HOME") );
 
-  gl->addWidget( new QLabel("Android SDK"), 0, 0 );
+  gl->addWidget( new QLabel( tr("Android SDK"), gbSDK ), 0, 0 );
   gl->addWidget( SDK, 0, 1 );
-  gl->addWidget( new QLabel("Android NDK"), 1, 0 );
+  gl->addWidget( new QLabel( tr("Android NDK"), gbSDK ), 1, 0 );
   gl->addWidget( NDK, 1, 1 );
-  gl->addWidget( new QLabel("JDK 6"), 2, 0 );
+  gl->addWidget( new QLabel( tr("JDK 6"), gbSDK ), 2, 0 );
   gl->addWidget( JDK, 2, 1 );
-  gl->addWidget( new QLabel("ANT"), 3, 0 );
+  gl->addWidget( new QLabel( tr("ANT"), gbSDK ), 3, 0 );
   gl->addWidget( ANT, 3, 1 );
   gl->setAlignment( Qt::AlignTop );
 
-  QGroupBox *gbAdMob = new QGroupBox( tr("AdMob"), wgt );
+
+  // AdMob
+  QFrame *gbAdMob = new QFrame( tabs );
   QGridLayout *gla = new QGridLayout( gbAdMob );
 
   aAppID = new QLineEdit( gbAdMob );
@@ -366,16 +444,269 @@ QWidget *MainWindow::settings( QWidget *parent )
   aBanner->addItem( tr("468 x 60"), "FULL_BANNER" );
   aBanner->addItem( tr("728 x 90"), "LEADERBOARD" );
 
-  gla->addWidget( new QLabel("App ID"), 0, 0 );
+  gla->addWidget( new QLabel( tr("App ID"), gbAdMob ), 0, 0 );
   gla->addWidget( aAppID, 0, 1 );
-  gla->addWidget( new QLabel("Position"), 1, 0 );
+  gla->addWidget( new QLabel( tr("Position"), gbAdMob ), 1, 0 );
   gla->addWidget( aPosition, 1, 1 );
-  gla->addWidget( new QLabel("Banner"), 2, 0 );
+  gla->addWidget( new QLabel( tr("Banner"), gbAdMob ), 2, 0 );
   gla->addWidget( aBanner, 2, 1 );
   gla->setAlignment( Qt::AlignTop );
 
-  vl->addWidget( gbSDK );
-  vl->addWidget( gbAdMob );
+
+  // Game settings
+  QTabWidget *tabGame = new QTabWidget( tabs );
+
+  // System
+  QFrame *fSystem = new QFrame( tabGame );
+  QGridLayout *gSystem = new QGridLayout( fSystem );
+
+  sgIdentity = new QLineEdit( fSystem );
+  sgIdentity->setToolTip( tr("The name of the save directory") );
+  sgIdentity->setObjectName("t.identity");
+
+  sgVersion = new QLineEdit( "0.9.1", fSystem );
+  sgVersion->setToolTip( tr("The LÖVE version this game was made for") );
+  sgVersion->setObjectName("t.version");
+  sgVersion->setEnabled( false );
+
+  sgConsole = new QCheckBox( fSystem );
+  sgConsole->setToolTip( tr("Attach a console (Windows only)") );
+  sgConsole->setObjectName("t.console");
+
+  gSystem->addWidget( new QLabel( tr("Identity"), fSystem ), 0, 0 );
+  gSystem->addWidget( sgIdentity, 0, 1 );
+  gSystem->addWidget( new QLabel( tr("Version"), fSystem ), 1, 0 );
+  gSystem->addWidget( sgVersion, 1, 1 );
+  gSystem->addWidget( new QLabel( tr("Console"), fSystem ), 2, 0 );
+  gSystem->addWidget( sgConsole, 2, 1 );
+  gSystem->setAlignment( Qt::AlignTop );
+
+  // Window
+  QFrame *fWindow = new QFrame( tabGame );
+  QGridLayout *gWindow = new QGridLayout( fWindow );
+
+  swTitle = new QLineEdit( "LoveGame", fWindow );
+  swTitle->setToolTip( tr("The window title") );
+  swTitle->setObjectName("t.window.title");
+  connect( gameName, SIGNAL(textChanged(QString)), swTitle, SLOT(setText(QString)) );
+
+  //t.window.icon = nil                -- Filepath to an image to use as the window's icon (string)
+
+  swWidth = new QSpinBox( fWindow );
+  swWidth->setButtonSymbols( QSpinBox::NoButtons );
+  swWidth->setMinimum(1);
+  swWidth->setMaximum( 99999 );
+  swWidth->setValue( 800 );
+  swWidth->setToolTip( tr("The window width") );
+  swWidth->setObjectName("t.window.width");
+
+  swHeight = new QSpinBox( fWindow );
+  swHeight->setButtonSymbols( QSpinBox::NoButtons );
+  swHeight->setMinimum(1);
+  swHeight->setMaximum( 99999 );
+  swHeight->setValue( 600 );
+  swHeight->setToolTip( tr("The window height") );
+  swHeight->setObjectName("t.window.height");
+
+  swBorderless = new QCheckBox( fWindow );
+  swBorderless->setToolTip( tr("Remove all border visuals from the window") );
+  swBorderless->setObjectName("t.window.borderless");
+
+  swResizable = new QCheckBox( fWindow );
+  swResizable->setToolTip( tr("Let the window be user-resizable") );
+  swResizable->setObjectName("t.window.resizable");
+
+  swMinWidth = new QSpinBox( fWindow );
+  swMinWidth->setButtonSymbols( QSpinBox::NoButtons );
+  swMinWidth->setMinimum(1);
+  swMinWidth->setMaximum( 99999 );
+  swMinWidth->setValue(1);
+  swMinWidth->setToolTip( tr("Minimum window width if the window is resizable") );
+  swMinWidth->setObjectName("t.window.minwidth");
+
+  swMinHeight = new QSpinBox( fWindow );
+  swMinHeight->setButtonSymbols( QSpinBox::NoButtons );
+  swMinHeight->setMinimum(1);
+  swMinHeight->setMaximum( 99999 );
+  swMinHeight->setValue(1);
+  swMinHeight->setToolTip( tr("Minimum window height if the window is resizable") );
+  swMinHeight->setObjectName("t.window.minheight");
+
+  swFullscreen = new QCheckBox( fWindow );
+  swFullscreen->setToolTip( tr("Enable fullscreen") );
+  swFullscreen->setObjectName("t.window.fullscreen");
+
+  swFullscreenType = new QComboBox( fWindow );
+  swFullscreenType->addItem("normal");
+  swFullscreenType->addItem("desktop");
+  swFullscreenType->setToolTip( tr("Standard fullscreen or desktop fullscreen mode") );
+  swFullscreenType->setObjectName("t.window.fullscreentype");
+
+  swVSync = new QCheckBox( fWindow );
+  swVSync->setToolTip( tr("Enable vertical sync") );
+  swVSync->setObjectName("t.window.vsync");
+  swVSync->setChecked( true );
+
+  swFSSA = new QSpinBox( fWindow );
+  swFSSA->setButtonSymbols( QSpinBox::NoButtons );
+  swFSSA->setMinimum(0);
+  swFSSA->setMaximum( 32 );
+  swFSSA->setValue(0);
+  swFSSA->setToolTip( tr("The number of samples to use with multi-sampled antialiasing") );
+  swFSSA->setObjectName("t.window.fsaa");
+
+  swDisplay = new QComboBox( fWindow );
+  swDisplay->addItem("1");
+  swDisplay->addItem("2");
+  swDisplay->setToolTip( tr("Index of the monitor to show the window in") );
+  swDisplay->setObjectName("t.window.display");
+
+  swHDPI = new QCheckBox( fWindow );
+  swHDPI->setToolTip( tr("Enable high-dpi mode for the window on a Retina display") );
+  swHDPI->setObjectName("t.window.highdpi");
+
+  swSRGB = new QCheckBox( fWindow );
+  swSRGB->setToolTip( tr("Enable sRGB gamma correction when drawing to the screen") );
+  swSRGB->setObjectName("t.window.srgb");
+
+  gWindow->addWidget( new QLabel( tr("Title"), fWindow ), 0, 0 );
+  gWindow->addWidget( swTitle, 0, 1 );
+  gWindow->addWidget( new QLabel( tr("Width"), fWindow ), 1, 0 );
+  gWindow->addWidget( swWidth, 1, 1 );
+  gWindow->addWidget( new QLabel( tr("Height"), fWindow ), 2, 0 );
+  gWindow->addWidget( swHeight, 2, 1 );
+  gWindow->addWidget( new QLabel( tr("Borderless"), fWindow ), 3, 0 );
+  gWindow->addWidget( swBorderless, 3, 1 );
+  gWindow->addWidget( new QLabel( tr("Resizable"), fWindow ), 4, 0 );
+  gWindow->addWidget( swResizable, 4, 1 );
+  gWindow->addWidget( new QLabel( tr("Min width"), fWindow ), 5, 0 );
+  gWindow->addWidget( swMinWidth, 5, 1 );
+  gWindow->addWidget( new QLabel( tr("Min height"), fWindow ), 6, 0 );
+  gWindow->addWidget( swMinHeight, 6, 1 );
+  gWindow->addWidget( new QLabel( tr("FullScreen"), fWindow ), 7, 0 );
+  gWindow->addWidget( swFullscreen, 7, 1 );
+  gWindow->addWidget( new QLabel( tr("FullScreen type"), fWindow ), 8, 0 );
+  gWindow->addWidget( swFullscreenType, 8, 1 );
+  gWindow->addWidget( new QLabel( tr("VSync"), fWindow ), 9, 0 );
+  gWindow->addWidget( swVSync, 9, 1 );
+  gWindow->addWidget( new QLabel( tr("FSSA"), fWindow ), 10, 0 );
+  gWindow->addWidget( swFSSA, 10, 1 );
+  gWindow->addWidget( new QLabel( tr("Display"), fWindow ), 11, 0 );
+  gWindow->addWidget( swDisplay, 11, 1 );
+  gWindow->addWidget( new QLabel( tr("HDPI"), fWindow ), 12, 0 );
+  gWindow->addWidget( swHDPI, 12, 1 );
+  gWindow->addWidget( new QLabel( tr("sRGB"), fWindow ), 13, 0 );
+  gWindow->addWidget( swSRGB, 13, 1 );
+
+  gWindow->setAlignment( Qt::AlignTop );
+
+
+  // Modules
+  QFrame *fModules = new QFrame( tabGame );
+  QGridLayout *gModules = new QGridLayout( fModules );
+
+  smAudio = new QCheckBox( tr("audio"), fModules );
+  smAudio->setToolTip(  tr("Enable the audio module") );
+  smAudio->setObjectName("t.modules.audio");
+  smAudio->setChecked( true );
+
+  smEvent = new QCheckBox( tr("event"), fModules );
+  smEvent->setToolTip(  tr("Enable the event module") );
+  smEvent->setObjectName("t.modules.event");
+  smEvent->setChecked( true );
+
+  smGraphics = new QCheckBox( tr("graphics"), fModules );
+  smGraphics->setToolTip(  tr("Enable the graphics module") );
+  smGraphics->setObjectName("t.modules.graphics");
+  smGraphics->setChecked( true );
+
+  smImage = new QCheckBox( tr("image"), fModules );
+  smImage->setToolTip(  tr("Enable the image module") );
+  smImage->setObjectName("t.modules.image");
+  smImage->setChecked( true );
+
+  smJoystick = new QCheckBox( tr("joystick"), fModules );
+  smJoystick->setToolTip(  tr("Enable the joystick module") );
+  smJoystick->setObjectName("t.modules.joystick");
+
+  smKeyboard = new QCheckBox( tr("keyboard"), fModules );
+  smKeyboard->setToolTip(  tr("Enable the keyboard module") );
+  smKeyboard->setObjectName("t.modules.keyboard");
+  smKeyboard->setChecked( true );
+
+  smMath = new QCheckBox( tr("math"), fModules );
+  smMath->setToolTip(  tr("Enable the math module") );
+  smMath->setObjectName("t.modules.math");
+  smMath->setChecked( true );
+
+  smMouse = new QCheckBox( tr("mouse"), fModules );
+  smMouse->setToolTip(  tr("Enable the mouse module") );
+  smMouse->setObjectName("t.modules.mouse");
+  smMouse->setChecked( true );
+
+  smPhysics = new QCheckBox( tr("physics"), fModules );
+  smPhysics->setToolTip(  tr("Enable the physics module") );
+  smPhysics->setObjectName("t.modules.physics");
+
+  smSound = new QCheckBox( tr("sound"), fModules );
+  smSound->setToolTip(  tr("Enable the sound module") );
+  smSound->setObjectName("t.modules.sound");
+  smSound->setChecked( true );
+
+  smSystem = new QCheckBox( tr("system"), fModules );
+  smSystem->setToolTip(  tr("Enable the system module") );
+  smSystem->setObjectName("t.modules.system");
+  smSystem->setChecked( true );
+
+  smTimer = new QCheckBox( tr("timer"), fModules );
+  smTimer->setToolTip(  tr("Enable the timer module") );
+  smTimer->setObjectName("t.modules.timer");
+  smTimer->setChecked( true );
+
+  smWindow = new QCheckBox( tr("window"), fModules );
+  smWindow->setToolTip(  tr("Enable the window module") );
+  smWindow->setObjectName("t.modules.window");
+  smWindow->setChecked( true );
+
+  smThread = new QCheckBox( tr("thread"), fModules );
+  smThread->setToolTip(  tr("Enable the thread module") );
+  smThread->setObjectName("t.modules.thread");
+
+  gModules->addWidget( smAudio, 0, 0 );
+  gModules->addWidget( smEvent, 0, 1 );
+  gModules->addWidget( smGraphics, 1, 0 );
+  gModules->addWidget( smImage, 1, 1 );
+  gModules->addWidget( smJoystick, 2, 0 );
+  gModules->addWidget( smKeyboard, 2, 1 );
+  gModules->addWidget( smMath, 3, 0 );
+  gModules->addWidget( smMouse, 3, 1 );
+  gModules->addWidget( smPhysics, 4, 0 );
+  gModules->addWidget( smSound, 4, 1 );
+  gModules->addWidget( smSystem, 5, 0 );
+  gModules->addWidget( smTimer, 5, 1 );
+  gModules->addWidget( smWindow, 6, 0 );
+  gModules->addWidget( smThread, 6, 1 );
+  gModules->setAlignment( Qt::AlignTop );
+
+
+  tabGame->addTab( fSystem, QIcon(""), tr("System") );
+  tabGame->addTab( fWindow, QIcon(""), tr("Window") );
+  tabGame->addTab( fModules, QIcon(""), tr("Modules") );
+  tabGame->setTabPosition( QTabWidget::South );
+
+
+  // Excludes
+  seExcludes = new QListWidget( tabs );
+  seExcludes->setEnabled( false );
+
+  connect( gameSourceDir, SIGNAL(textChanged(QString)), this, SLOT(updateExcludes(QString)) );
+
+  tabs->addTab( gbSDK, QIcon(""), tr("SDK") );
+  tabs->addTab( gbAdMob, QIcon(""), tr("AdMob") );
+  tabs->addTab( tabGame, QIcon(""), tr("Game") );
+  tabs->addTab( seExcludes, QIcon(""), tr("Excludes") );
+
+  vl->addWidget( tabs );
   vl->setAlignment( Qt::AlignTop );
 
   return wgt;
@@ -481,6 +812,8 @@ void MainWindow::exportWindows()
   if (!checkData())
     return;
 
+  checkConf( Export::Windows );
+
   QString gameTargetDirStr = gameTargetDir->text().trimmed();
 
   if (gameTargetDirStr.isEmpty())
@@ -522,6 +855,14 @@ void MainWindow::exportWindows()
   info.gameSourceDir = gameSourceDir->text().trimmed();
   info.gameTargetDir = gameTargetDir->text().trimmed();
   info.zipDir = act->objectName();
+
+  for (int i = 0; i < seExcludes->count(); ++i)
+  {
+    QListWidgetItem *it = seExcludes->item(i);
+
+    if (it->checkState() == Qt::Checked)
+      info.excludes.append( it->text() );
+  }
 
   WindowsExporter *we = new WindowsExporter( info, this );
   connect( we, SIGNAL(started()), this, SLOT(threadStarted()) );
@@ -590,6 +931,8 @@ void MainWindow::exportAndroid()
     tabs->setCurrentIndex(1);
     return;
   }
+
+  //checkConf( Export::Other );
 
   QString gameTargetDirStr = gameTargetDir->text().trimmed();
 
@@ -700,6 +1043,8 @@ void MainWindow::exportLinux()
   if (!checkData())
     return;
 
+  checkConf( Export::Other );
+
   QString gameTargetDirStr = gameTargetDir->text().trimmed();
 
   if (gameTargetDirStr.isEmpty())
@@ -722,6 +1067,14 @@ void MainWindow::exportLinux()
   info.gameTargetDir = gameTargetDir->text().trimmed();
   info.zipDir = act->objectName();
 
+  for (int i = 0; i < seExcludes->count(); ++i)
+  {
+    QListWidgetItem *it = seExcludes->item(i);
+
+    if (it->checkState() == Qt::Checked)
+      info.excludes.append( it->text() );
+  }
+
   LinuxExporter *le = new LinuxExporter( info, this );
   connect( le, SIGNAL(started()), this, SLOT(threadStarted()) );
   connect( le, SIGNAL(finished()), this, SLOT(threadFinished()) );
@@ -734,6 +1087,8 @@ void MainWindow::exportMac()
   if (!checkData())
     return;
 
+  checkConf( Export::Other );
+
   QToolButton *act = dynamic_cast<QToolButton *>( sender() );
 
   ExportInfo info;
@@ -741,6 +1096,14 @@ void MainWindow::exportMac()
   info.gameSourceDir = gameSourceDir->text().trimmed();
   info.gameTargetDir = gameTargetDir->text().trimmed();
   info.zipDir = act->objectName();
+
+  for (int i = 0; i < seExcludes->count(); ++i)
+  {
+    QListWidgetItem *it = seExcludes->item(i);
+
+    if (it->checkState() == Qt::Checked)
+      info.excludes.append( it->text() );
+  }
 
   MacExporter *me = new MacExporter( info, this );
   connect( me, SIGNAL(started()), this, SLOT(threadStarted()) );
@@ -914,5 +1277,22 @@ void MainWindow::readStandartOutput()
 
   if (p)
     writeLog( p->readAllStandardOutput() );
+}
+//=================================================================================================
+void MainWindow::updateExcludes( const QString &path )
+{
+  seExcludes->clear();
+
+  QDir dir( PathUtils::nativePath( path ) );
+
+  foreach (QFileInfo info, dir.entryInfoList( QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst ))
+  {
+    if (info.isDir())
+    {
+      QListWidgetItem *it = new QListWidgetItem( QIcon(""), info.baseName(), seExcludes );
+      it->setData( Qt::CheckStateRole, Qt::Unchecked );
+      seExcludes->addItem( it );
+    }
+  }
 }
 //=================================================================================================

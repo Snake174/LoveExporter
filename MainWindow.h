@@ -2,14 +2,26 @@
 #define MAINWINDOW_H
 
 //=================================================================================================
+namespace Export
+{
+  enum
+  {
+    Windows = 0,
+    Other = 1
+  };
+}
+//=================================================================================================
 #include <QMainWindow>
 //=================================================================================================
 class QComboBox;
+class QCheckBox;
 class QLineEdit;
+class QListWidget;
 class QTabWidget;
 class QToolBar;
 class QToolButton;
 class QPlainTextEdit;
+class QSpinBox;
 class QTextEdit;
 class SDKWidget;
 //=================================================================================================
@@ -64,6 +76,42 @@ class MainWindow : public QMainWindow
   QComboBox *aPosition;
   QComboBox *aBanner;
 
+  // Game settings
+  QLineEdit *sgIdentity;
+  QLineEdit *sgVersion;
+  QCheckBox *sgConsole;
+  QLineEdit *swTitle;
+  QSpinBox *swWidth;
+  QSpinBox *swHeight;
+  QCheckBox *swBorderless;
+  QCheckBox *swResizable;
+  QSpinBox *swMinWidth;
+  QSpinBox *swMinHeight;
+  QCheckBox *swFullscreen;
+  QComboBox *swFullscreenType;
+  QCheckBox *swVSync;
+  QSpinBox *swFSSA;
+  QComboBox *swDisplay;
+  QCheckBox *swHDPI;
+  QCheckBox *swSRGB;
+  QCheckBox *smAudio;
+  QCheckBox *smEvent;
+  QCheckBox *smGraphics;
+  QCheckBox *smImage;
+  QCheckBox *smJoystick;
+  QCheckBox *smKeyboard;
+  QCheckBox *smMath;
+  QCheckBox *smMouse;
+  QCheckBox *smPhysics;
+  QCheckBox *smSound;
+  QCheckBox *smSystem;
+  QCheckBox *smTimer;
+  QCheckBox *smWindow;
+  QCheckBox *smThread;
+
+  // Excludes
+  QListWidget *seExcludes;
+
   public:
     MainWindow( QWidget *parent = 0 );
     ~MainWindow() {}
@@ -71,6 +119,7 @@ class MainWindow : public QMainWindow
   private:
     void createMenu();
     bool checkData();
+    void checkConf( int t );
     QWidget *gameSettings( QWidget *parent );
     QWidget *keyStore( QWidget *parent );
     QWidget *settings( QWidget *parent );
@@ -93,6 +142,7 @@ class MainWindow : public QMainWindow
     void createNewKeystoreProc( const KeystoreInfo &ki );
     void selectKeyFile();
     void readStandartOutput();
+    void updateExcludes( const QString &path );
 };
 //=================================================================================================
 

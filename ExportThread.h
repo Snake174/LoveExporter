@@ -35,6 +35,9 @@ typedef struct
   QString aAppID;
   QString aPosition;
   QString aBanner;
+
+  // Excludes
+  QStringList excludes;
 } ExportInfo;
 //=================================================================================================
 class ExportThread : public QThread

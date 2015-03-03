@@ -29,7 +29,7 @@
           <b>Post:</b> tester
         </td>
       </tr>
-      <tr><td align="center" colspan="2"><b>Site:</b> <a href="#">http://goo.gl/hC6ph3</a></td></tr>
+      <tr><td align="center" colspan="2"><b>Site:</b> <a href="#">http://snake174.github.io</a></td></tr>
     </table>
   </body>
 </html>
